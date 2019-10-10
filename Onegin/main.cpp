@@ -1,113 +1,47 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include "String.h"
+#include "read_and_write.h"
+#include "Sort.h"
 
-void print_text(char **text, int strings_count)
-{
-    for (int i = 0; i < strings_count; ++i)
-        printf("%s", text[i]);
-    printf("\n");
-}
+//! This program reads text from input file and prints in output file the same text,
+//! text, sorted by strings and text, sorted in reverse order by strings
 
-int input_text(char **text)
-{
-    FILE *f;
-    f = fopen("Onegin.txt", "r");
-    if (f == NULL)
-    {
-        perror("ERROR");
-        return 0;
-    }
-    else
-    {
-        int i = 0;
-        int strings_count = 0;
-        char buf[100];
-        while (fgets(buf, 100, f))
-        {
-            text[i] = (char *)realloc(text[i], strlen(buf));
-            strcpy(text[i], buf);
-            ++i;
-            ++strings_count;
-        }
-        return strings_count;
-    }
-}
-
-int compare (const void *lhs, const void *rhs)
-{
-    const char *l = *((const char**)lhs);
-    const char *r = *((const char**)rhs);
-    return strcmp(l, r);
-}
-
-char **sort_text(char **text, char **sorted_text, int strings_count)
-{
-    for (int i = 0; i < strings_count; ++i)
-        strcpy(sorted_text[i], text[i]);
-
-    qsort(sorted_text, strings_count, sizeof(char *), compare);
-    return sorted_text;
-}
-
-int compare_back(const void *lhs, const void *rhs)
-{
-    const char *l = *((const char**)lhs);
-    const char *r = *((const char**)rhs);
-    int size_l = strlen(l);
-    int size_r = strlen(r);
-    char *reversed_l = (char *)calloc(size_l, sizeof(char));
-    char *reversed_r = (char *)calloc(size_r, sizeof(char));
-
-    for (int i = 0; i < size_l - 1; ++i)
-        reversed_l[i] = l[size_l - 2 - i];
-    reversed_l[size_l - 1] = '\n';
-    reversed_l[size_l] = '\0';
-
-    for (int i = 0; i < size_r - 1; ++i)
-        reversed_r[i] = r[size_r - 2 - i];
-    reversed_r[size_r - 1] = '\n';
-    reversed_r[size_r] = '\0';
-
-    int result = strcmp(reversed_l, reversed_r);
-    free(reversed_l);
-    free(reversed_r);
-    return result;
-}
-
-char **sort_back_text(char **text, char **sorted_back_text, int strings_count)
-{
-    for (int i = 0; i < strings_count; ++i)
-        strcpy(sorted_back_text[i], text[i]);
-    qsort(sorted_back_text, strings_count, sizeof(char *), compare_back);
-    return sorted_back_text;
-}
+/*! \input
+    1) Input file name.
+    2) Output file name.
+*/
 
 int main()
 {
-    char **text = (char **)calloc(100, sizeof(char *));
-    for (int i = 0; i < 100; ++i)
-        text[i] = (char *)calloc(50, sizeof(char));
-    int strings_count = input_text(text);
-    text = (char **)realloc(text, strings_count);
+    printf("Enter input file name\n");
+    char inputfilename[20];
+    char outputfilename[20];
+    scanf("%s", inputfilename);
 
-    char **sorted_text = (char **)calloc(strings_count, sizeof(char *));
-    for (int i = 0; i < strings_count; ++i)
-        sorted_text[i] = (char *)calloc(strlen(text[i]), sizeof(char));
-    sorted_text = sort_text(text, sorted_text, strings_count);
+    char *buf = (char *)calloc(bufsize, sizeof(char));
+    input_text(buf, inputfilename);
+    int strings_count = count_strings(buf);
 
-    char **sorted_back_text = (char **)calloc((strings_count), sizeof(char *));
-    for (int i = 0; i < strings_count; ++i)
-        sorted_back_text[i] = (char *)calloc(strlen(text[i]), sizeof(char));
+    String *strings = (String *)calloc(strings_count, sizeof(String));
+    strings = make_index(strings, buf);
 
-    sorted_back_text = sort_back_text(text, sorted_back_text, strings_count);
+    String *strings_sorted = (String *)calloc(strings_count, sizeof(String));
+    strings_sorted = sort_text(strings, strings_sorted , strings_count);
 
-    print_text(text, strings_count);
-    print_text(sorted_text, strings_count);
-    print_text(sorted_back_text, strings_count);
+    String *strings_sorted_back = (String *)calloc(strings_count, sizeof(String));
+    strings_sorted_back = sort_text_back(strings, strings_sorted_back, strings_count);
 
-    free(text);
-    free(sorted_text);
-    free(sorted_back_text);
+    printf("Enter output file name\n");
+    scanf("%s", outputfilename);
+
+    print_text_in_file(strings, strings_count, outputfilename);
+    print_text_in_file(strings_sorted, strings_count, outputfilename);
+    print_text_in_file(strings_sorted_back, strings_count, outputfilename);
+
+    printf("All is done, check result in output.txt\n");
+
+    free(buf);
+    free(strings);
+    free(strings_sorted);
+    free(strings_sorted_back);
     return 0;
 }
